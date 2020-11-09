@@ -2,30 +2,24 @@
 """
 Created on Sun Oct 25 11:38:06 2020
 
-@author: Itachi Bal
+@author: Itachi Bal(PHANINDRA BALAJI)
 """
 import numpy as np 
 import pandas as pd
 import matplotlib.pyplot as plt
-
-import warnings
-warnings.filterwarnings("ignore")
-
 import os
-print(os.listdir("C:/Users/Itachi Bal/Desktop/ML/project"))
 
-bit_data=pd.read_csv("C:/Users/Itachi Bal/Desktop/ML/project/bitstampUSD_1-min_data_2012-01-01_to_2020-09-14.csv")
-bit_data.head()
+
+print(os.listdir("C:/Users/Itachi Bal/Desktop/ML/project"))#returns the content in this following address
+bit_data=pd.read_csv("C:/Users/Itachi Bal/Desktop/ML/project/bitstampUSD_1-min_data_2012-01-01_to_2020-09-14.csv")#read data
+bit_data.head()#display first five rows
 bit_data["date"]=pd.to_datetime(bit_data["Timestamp"],unit="s").dt.date #converting the time stamp to date-time
 group=bit_data.groupby("date") # grouping the data according to new column date 
 data=group["Close"].mean()
-
-data.shape #(3178,)
-
-data.isnull().sum() #0
-
-data.head()
-print(bit_data.columns)
+data.shape #(3178,)shape of the data
+data.isnull().sum() #0 checks for null values in the data
+data.head()#display first five rows
+print(bit_data.columns)#name of the columns
 
 # data[1:367]
 # data[368:(368+364)]
@@ -38,16 +32,13 @@ print(bit_data.columns)
 ##########################################
 #eda
 
-#The goal is making a prediction of daily Close data.
-# So we will predict "close" values of bitcoin data
-
-
+#GOAL: predict the closing price of the bitcoin of a following day
 close_train=data.iloc[:len(data)-50] # training set
 close_test=data.iloc[len(close_train):] # testing set
  
 
 plt.figure(figsize=(15,5))
-plt.plot(np.log(close_train))
+plt.plot(np.log(close_train))# as the data follows a bit of exponential distribution, log tranformation of the data gives us better scope
 plt.xlabel("PERIOD")
 plt.ylabel("Close-price")
 plt.title("LOG-TRANSFORMATION OF CLOSE PRICE")
@@ -92,15 +83,15 @@ x_train=x_train.reshape(x_train.shape[0],x_train.shape[1],1) #reshaping the inpu
 
 #################SIMPLE-RNN##################
 from keras.models import Sequential
-from keras.layers import Dense, SimpleRNN, Dropout,Flatten
+from keras.layers import Dense, SimpleRNN, Dropout,Flatten#importing necessary files
 
-regressor=Sequential()
+regressor=Sequential()#starting the sequential model
 #first RNN layer
 regressor.add(SimpleRNN(128,activation="relu",return_sequences=True,input_shape=(x_train.shape[1],1)))
 regressor.add(Dropout(0.25))#dropout layer
 #second RNN layer
-regressor.add(SimpleRNN(256,activation="relu",return_sequences=True))
-regressor.add(Dropout(0.25))
+regressor.add(SimpleRNN(256,activation="relu",return_sequences=True))#here 256 is the output of the hidden layer
+regressor.add(Dropout(0.25)) # 25 percent of the inputs are dropped
 #third RNN layer
 regressor.add(SimpleRNN(512,activation="relu",return_sequences=True))
 regressor.add(Dropout(0.35))
@@ -118,7 +109,7 @@ regressor.add(Dense(1))
 
 # defining loss and optimizers
 regressor.compile(optimizer="adam",loss="mean_squared_error")
-regressor.fit(x_train,y_train,epochs=50,batch_size=55)
+regressor.fit(x_train,y_train,epochs=50,batch_size=55)#training the model
 
 
 print(regressor.summary())#architecture of the rnn
@@ -157,6 +148,7 @@ from sklearn.metrics import mean_squared_error
 MSE = mean_squared_error(data_test, predicted_data)
 MSE
 # different parameters
+#epochs batch-size MSE
 #100 55 517171.28
 #100 61 918243.01
 #100 64 1996415.42
@@ -167,18 +159,11 @@ from keras.models import Sequential
 from keras.layers import Dense, LSTM, Dropout,Flatten
 
 model=Sequential()
-
 model.add(LSTM(27,input_shape=(None,1),activation="relu")) # LSTM layer
-
 model.add(Dense(1))
-
 model.compile(loss="mean_squared_error",optimizer="adam")
-
 model.fit(x_train,y_train,epochs=500,batch_size=35) #training the model
-
-
 print(model.summary())
-
 #preparing the X-TEST for prediction
 inputs=data[len(data)-len(close_test)-timestep:]
 inputs=inputs.values.reshape(-1,1)
@@ -219,11 +204,6 @@ MSE_LSTM #MSE
 #LSTM-20 cells-100 epochs-35 batch size-51206.13  MSE
 #LSTM-27 cells-200 epochs-30 batch size-70301.64  MSE
 #LSTM-27 cells-500 epochs-35 batch size-49441.44  MSE
-
-
-
-
-
 
 #####################GRU-RNN###################
 from keras.models import Sequential
